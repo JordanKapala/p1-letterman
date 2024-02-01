@@ -1,5 +1,5 @@
-C
-3564
+C    
+3564    
 // Around 4300 of the most commonly used words
 // in the English language.
 [ai]

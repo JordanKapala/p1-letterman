@@ -14,9 +14,10 @@ class Letterman
 private:
     string begin;
     string end;
-    size_t b_idx = string::npos;
-    size_t e_idx = string::npos;
-    int cw_idx; 
+    int b_idx = -1;
+    int e_idx = -1;
+    int cw_idx;
+    int dict_size; 
     bool stack_mode = false;
     bool queue_mode = false;
     bool change_mode = false; // change letter
@@ -37,7 +38,7 @@ private:
     public:
         dict_entry(const string &word) : word(word) {}
 
-        string getWord() const{
+        const string& getWord() {
             return word;
         }
         bool isDiscovered() {
@@ -82,11 +83,6 @@ private:
         for (int i = 0; i < line_count; i++) {
             getline(cin, current_word);
 
-            // size_t reversal_ind = current_word.find("&");
-            // size_t insert_ind1  = current_word.find("[");
-            // size_t insert_ind2  = current_word.find("]");
-            // size_t swap_ind     = current_word.find("!");
-            // size_t double_ind   = current_word.find("?");
             size_t special_char_id = current_word.find_first_of("&[!?");
 
             if (current_word[0] == '/') { // ignore word if comment
@@ -142,39 +138,39 @@ private:
     void checkBeginEnd(const string &current_word) 
     {
         if (current_word == begin) {
-            b_idx = dict_entries.size();
+            b_idx = static_cast<int>(dict_entries.size());
         }
         if (current_word == end) {
-            e_idx = dict_entries.size();
+            e_idx = static_cast<int>(dict_entries.size());
         }
     }
 
-    void checkBeginEndinDict()
-    {
+    // void checkBeginEndinDict()
+    // {
 
-        auto b_it = find_if(dict_entries.begin(),
-                         dict_entries.end(),
-                         [&](const dict_entry &de)
-                         { return (de.getWord() == begin); });
+    //     auto b_it = find_if(dict_entries.begin(),
+    //                      dict_entries.end(),
+    //                      [&](const dict_entry &de)
+    //                      { return (de.getWord() == begin); });
 
-        auto e_it = find_if(dict_entries.begin(),
-                         dict_entries.end(),
-                         [&](const dict_entry &de)
-                         { return (de.getWord() == end); });
+    //     auto e_it = find_if(dict_entries.begin(),
+    //                      dict_entries.end(),
+    //                      [&](const dict_entry &de)
+    //                      { return (de.getWord() == end); });
 
-        if (b_it == dict_entries.end())
-        {
-            cerr << "Error: Beginning word does not exist in the dictionary" << endl;
-            exit(1);
-        }
-        if (e_it == dict_entries.end())
-        {
-            cerr << "Error: Ending word does not exist in the dictionary" << endl;
-            exit(1);
-        }
+    //     if (b_it == dict_entries.end())
+    //     {
+    //         cerr << "Error: Beginning word does not exist in the dictionary" << endl;
+    //         exit(1);
+    //     }
+    //     if (e_it == dict_entries.end())
+    //     {
+    //         cerr << "Error: Ending word does not exist in the dictionary" << endl;
+    //         exit(1);
+    //     }
 
         
-    }
+    // }
 
 public:
     // Letterman(const int &argc, char *argv[]) : {}
@@ -326,30 +322,27 @@ public:
             readComplexDict();
         }
 
-        if (b_idx == string::npos) {
+        if (b_idx == -1) {
             cerr << "Error: Beginning word does not exist in the dictionary" << endl;
             exit(1);
         }
-        if (e_idx == string::npos) {
+        if (e_idx == -1) {
             cerr << "Error: Ending word does not exist in the dictionary" << endl;
             exit(1);
         }
 
+        dict_size = static_cast<int>(dict_entries.size());
         //checkBeginEndinDict();
     }
 
     void search() {
         deque<int> sc;
 
-        sc.push_front(static_cast<int>(b_idx));
+        sc.push_front(b_idx);
         dict_entries[b_idx].discover();
 
-        size_t shared_char_count;
-        size_t diff_char_count;
-        string word;
-        string cw;
-        size_t w_len;
-        size_t cw_len;
+        int shared_char_count;
+        int diff_char_count;
 
         bool isSimilar;
         while(!solution) {
@@ -361,34 +354,73 @@ public:
                 cw_idx = sc.front();
                 sc.pop_front();
             }
-            
-            for (size_t i = 0; i < dict_entries.size(); i++) {
+            const int &cw_len    = static_cast<int>(dict_entries[cw_idx].getWord().length());
+            const string &cw      = dict_entries[cw_idx].getWord();
+            for (int i = 0; i < dict_size; i++) {
                 dict_entry &de = dict_entries[i];
                 if (!de.isDiscovered()) {
-                    word      = de.getWord();
-                    cw        = dict_entries[cw_idx].getWord();
-                    w_len     = word.length();
-                    cw_len    = cw.length();
+                    const int &w_len     = static_cast<int>(de.getWord().length());
                     isSimilar = false;
                     
-                    if (change_mode && w_len == cw_len) {
-                        diff_char_count   = 0;
-                        isSimilar = true;
-                        for (size_t j = 0; j < w_len; j++) {
-                            if (word[j] != cw[j]) {
-                                diff_char_count++;
-                                if (diff_char_count == 2) {
-                                    isSimilar = false;
-                                    break;
+                    if (w_len == cw_len) {
+                        const string &word = de.getWord();
+                        if (change_mode) {
+                            diff_char_count   = 0;
+                            isSimilar = true;
+                            for (int j = 0; j < w_len; j++) {
+                                if (word[j] != cw[j]) {
+                                    diff_char_count++;
+                                    if (diff_char_count == 2) {
+                                        isSimilar = false;
+                                        break;
+                                    }
                                 }
+                            }
+                        }
+                        if (swap_mode && !isSimilar) {
+                            shared_char_count = 0;
+                            diff_char_count = 0;
+                            // swapped = false;
+                            // isSimilar = true;
+                            for (int j = 0; j < w_len; j++) {
+                                // if (cw[j] != word[j]) {
+                                //     if (swapped) {
+                                //         isSimilar = false;
+                                //         break;
+                                //     }
+                                //     if ((cw[j] == word[j+1]) && (cw[j+1] == word[j])) {
+                                //         swapped = true;
+                                //         j++;
+                                //     }
+                                //     else {
+                                //         isSimilar = false;
+                                //         break;
+                                //     }
+                                // }
+                                if (cw[j] == word[j]) {
+                                    shared_char_count++;
+                                }
+                                else {
+                                    if ((cw[j] == word[j+1]) && (cw[j+1] == word[j])) {
+                                        diff_char_count++;
+                                        if (diff_char_count == 2) {
+                                            break;
+                                        }
+                                        j++;
+                                    }
+                                }
+                            }
+                            if (shared_char_count == (w_len-2) && diff_char_count == 1) {
+                                isSimilar = true;
                             }
                         }
                     }
                     else if (length_mode && !isSimilar && (w_len == cw_len+1 || w_len == cw_len-1)) {
+                        const string &word    = de.getWord();
                         shared_char_count = 0;
                         diff_char_count   = 0;
                         if (w_len == cw_len+1) {
-                            for (size_t j = 0, k = 0; k < w_len; k++) {
+                            for (int j = 0, k = 0; k < w_len; k++) {
                                 if (cw[j] == word[k]) {
                                     shared_char_count++;
                                     if (shared_char_count == cw_len) {
@@ -406,7 +438,7 @@ public:
                             }
                         }
                         else {
-                            for (size_t j = 0, k = 0; j < cw_len; j++) {
+                            for (int j = 0, k = 0; j < cw_len; j++) {
                                 if (cw[j] == word[k]) {
                                     shared_char_count++;
                                     if (shared_char_count == w_len) {
@@ -424,48 +456,20 @@ public:
                             }
                         }
                     }
-                    else if (swap_mode && !isSimilar && w_len == cw_len) {
-                        shared_char_count = 0;
-                        diff_char_count   = 0;
-                        for (size_t j = 0; j < w_len; j++) {
-                            if (cw[j] == word[j]) {
-                                shared_char_count++;
-                            }
-                            else {
-                                if ((cw[j] == word[j+1]) && (cw[j+1] == word[j])) {
-                                    diff_char_count++;
-                                    if (diff_char_count == 2) {
-                                        break;
-                                    }
-                                    j++;
-                                }
-                            }
-                        }
-                        if (shared_char_count == (w_len-2) && diff_char_count == 1) {
-                            isSimilar = true;
-                        }
-                    }
 
                     if (isSimilar) {
                         de.discover();
                         de.setPrev(cw_idx);
                         sc.push_back(static_cast<int>(i));
-                        if (word == end) {
+                        if (i == e_idx) {
                             solution = true;
-                            break;
+                            return ;
                         }
                     }
                 }
             }
             if (sc.empty()) { //no path
                 break;
-                // int words_discovered = 0;
-                // for (dict_entry &de : dict_entries) {
-                //     if (de.getPrev() != -1) {
-                //         words_discovered++;
-                //     }
-                // }
-                // cout << "No solution"
             }
         }
     }
@@ -485,13 +489,13 @@ public:
         
         }
         else {
-            vector<int> word_order;
-            int index = static_cast<int>(e_idx);
-            while (index != static_cast<int>(b_idx)) {
+            vector<size_t> word_order;
+            int index = (e_idx);
+            while (index != (b_idx)) {
                 word_order.push_back(index);
                 index = dict_entries[index].getPrev();
             }
-            word_order.push_back(static_cast<int>(b_idx));
+            word_order.push_back((b_idx));
             size_t morph_count = word_order.size();
             cout << "Words in morph: " << morph_count << "\n";
 
@@ -506,15 +510,13 @@ public:
                 //run n times
                 //look at end word,
                 size_t shared_char_count;
-                string word;
-                string cw;
                 size_t w_len;
                 size_t cw_len;
 
                 cout << begin << "\n";
                 for (size_t i = morph_count-1; i;i--) {
-                    word      = dict_entries[word_order[i-1]].getWord();
-                    cw        = dict_entries[word_order[i]].getWord();
+                    const string &word      = dict_entries[word_order[i-1]].getWord();
+                    const string &cw        = dict_entries[word_order[i]].getWord();
                     w_len     = word.length();
                     cw_len    = cw.length();
 
@@ -566,7 +568,7 @@ public:
 
 int main(int argc, char *argv[])
 {
-    //std::ios_base::sync_with_stdio(false);
+    std::ios_base::sync_with_stdio(false);
     Letterman object = Letterman();
     object.GetOptions(argc, argv);
     object.readDict();
