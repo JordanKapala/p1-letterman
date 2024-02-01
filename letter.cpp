@@ -18,6 +18,7 @@ private:
     int e_idx = -1;
     int cw_idx;
     int dict_size; 
+    size_t b_len;
     bool stack_mode = false;
     bool queue_mode = false;
     bool change_mode = false; // change letter
@@ -26,7 +27,7 @@ private:
     bool output_W = true;     // word format is basic output mode
     bool solution = false;    // there is a solution
 
-    char dict_type; // S or C
+    string dict_type; // S or C
     int line_count;
     class dict_entry
     { // nested class to store dict entry info
@@ -62,16 +63,19 @@ private:
         string current_word;
 
         for (int i = 0; i < line_count; i++) {
-            getline(cin, current_word);
+            cin >> current_word;
 
             if (current_word[0] == '/')
             { // ignore word if comment
+                getline(cin, current_word);
                 i--;
             }
             else
             { // instantiate dict entry if a word
-                checkBeginEnd(current_word);
-                dict_entries.push_back(dict_entry(current_word));
+                if (length_mode || current_word.length() == b_len) {
+                    checkBeginEnd(current_word);
+                    dict_entries.push_back(dict_entry(current_word));
+                }
             }
         }
     }
@@ -81,56 +85,71 @@ private:
         string current_word;
         
         for (int i = 0; i < line_count; i++) {
-            getline(cin, current_word);
+            cin >> current_word;
 
             size_t special_char_id = current_word.find_first_of("&[!?");
 
             if (current_word[0] == '/') { // ignore word if comment
+                getline(cin, current_word);
                 i--;
             }
             else if (special_char_id != string::npos) { //special character mods
-                     if (current_word[special_char_id] == '&') { //reversal &
-                    current_word.pop_back();
-                    checkBeginEnd(current_word);
-                    dict_entries.push_back(dict_entry(current_word));
-                    for (size_t i = 0; i < current_word.length()/2; i++) {
-                        swap(current_word[i], current_word[current_word.length()-i-1]);
+
+                
+                if (current_word[special_char_id] == '&') { //reversal &
+                    if (length_mode || current_word.length()-1 == b_len) {
+                        current_word.pop_back();
+                        checkBeginEnd(current_word);
+                        dict_entries.push_back(dict_entry(current_word));
+                        for (size_t i = 0; i < current_word.length()/2; i++) {
+                            swap(current_word[i], current_word[current_word.length()-i-1]);
+                        }
+                        checkBeginEnd(current_word);
+                        dict_entries.push_back(dict_entry(current_word));
                     }
-                    checkBeginEnd(current_word);
-                    dict_entries.push_back(dict_entry(current_word));
                 }
                 else if (current_word[special_char_id] == '[') { //insert  []
                     size_t special_char_id2  = current_word.find("]");
                     size_t word_count = special_char_id2 - special_char_id - 1;
-                    string chars = current_word.substr(special_char_id+1, word_count);
-                    current_word.erase(special_char_id, word_count + 2);
-                    for (size_t i = 0; i < word_count; i++) {
-                        current_word.insert(special_char_id, 1, chars[i]);
-                        checkBeginEnd(current_word);
-                        dict_entries.push_back(dict_entry(current_word));
-                        current_word.erase(special_char_id, 1);
+                    if (length_mode || (current_word.length()-word_count-1) == b_len) {
+                        string chars = current_word.substr(special_char_id+1, word_count);
+                        current_word.erase(special_char_id, word_count + 2);
+                        for (size_t i = 0; i < word_count; i++) {
+                            current_word.insert(special_char_id, 1, chars[i]);
+                            checkBeginEnd(current_word);
+                            dict_entries.push_back(dict_entry(current_word));
+                            current_word.erase(special_char_id, 1);
+                        }
                     }
                 }
                 else if (current_word[special_char_id] == '!') { //swap     !
-                    current_word.erase(special_char_id, 1);
-                    checkBeginEnd(current_word);
-                    dict_entries.push_back(dict_entry(current_word));
-                    swap(current_word[special_char_id-1], current_word[special_char_id-2]);
-                    checkBeginEnd(current_word);
-                    dict_entries.push_back(dict_entry(current_word));
+                    if (length_mode || current_word.length()-1 == b_len) {
+                        current_word.erase(special_char_id, 1);
+                        checkBeginEnd(current_word);
+                        dict_entries.push_back(dict_entry(current_word));
+                        swap(current_word[special_char_id-1], current_word[special_char_id-2]);
+                        checkBeginEnd(current_word);
+                        dict_entries.push_back(dict_entry(current_word));
+                    }
                 }
                 else if (current_word[special_char_id] == '?') { //double   ?
                 current_word.erase(special_char_id, 1);
-                checkBeginEnd(current_word);
-                dict_entries.push_back(dict_entry(current_word));
-                current_word.insert(special_char_id, 1, current_word[special_char_id-1]);
-                checkBeginEnd(current_word);
-                dict_entries.push_back(dict_entry(current_word));
+                if (length_mode || current_word.length() == b_len) {
+                    checkBeginEnd(current_word);
+                    dict_entries.push_back(dict_entry(current_word));
+                }
+                if (length_mode || current_word.length()+1 == b_len) {
+                    current_word.insert(special_char_id, 1, current_word[special_char_id-1]);
+                    checkBeginEnd(current_word);
+                    dict_entries.push_back(dict_entry(current_word));
+                }
             }
             }
             else {
-                checkBeginEnd(current_word);
-                dict_entries.push_back(dict_entry(current_word));
+                if (length_mode || current_word.length() == b_len) {
+                    checkBeginEnd(current_word);
+                    dict_entries.push_back(dict_entry(current_word));
+                }
             }
         }
     }
@@ -144,33 +163,6 @@ private:
             e_idx = static_cast<int>(dict_entries.size());
         }
     }
-
-    // void checkBeginEndinDict()
-    // {
-
-    //     auto b_it = find_if(dict_entries.begin(),
-    //                      dict_entries.end(),
-    //                      [&](const dict_entry &de)
-    //                      { return (de.getWord() == begin); });
-
-    //     auto e_it = find_if(dict_entries.begin(),
-    //                      dict_entries.end(),
-    //                      [&](const dict_entry &de)
-    //                      { return (de.getWord() == end); });
-
-    //     if (b_it == dict_entries.end())
-    //     {
-    //         cerr << "Error: Beginning word does not exist in the dictionary" << endl;
-    //         exit(1);
-    //     }
-    //     if (e_it == dict_entries.end())
-    //     {
-    //         cerr << "Error: Ending word does not exist in the dictionary" << endl;
-    //         exit(1);
-    //     }
-
-        
-    // }
 
 public:
     // Letterman(const int &argc, char *argv[]) : {}
@@ -212,6 +204,7 @@ public:
                 else
                 {
                     begin = arg;
+                    b_len = begin.length();
                 }
                 break;
             }
@@ -309,11 +302,11 @@ public:
     { // fills vector<dict_entry> with the read in dictionary
         cin >> dict_type;
         cin >> line_count;
-        cin.ignore();
+        // cin.ignore();
 
         dict_entries.reserve(line_count);
 
-        if (dict_type == 'S')
+        if (dict_type == "S")
         { // simple dict
             readSimpleDict();
         }
@@ -415,6 +408,9 @@ public:
                             }
                         }
                     }
+                    // else if (!length_mode) {
+                    //     de.discover();
+                    // }
                     else if (length_mode && !isSimilar && (w_len == cw_len+1 || w_len == cw_len-1)) {
                         const string &word    = de.getWord();
                         shared_char_count = 0;
@@ -456,7 +452,6 @@ public:
                             }
                         }
                     }
-
                     if (isSimilar) {
                         de.discover();
                         de.setPrev(cw_idx);
@@ -489,7 +484,7 @@ public:
         
         }
         else {
-            vector<size_t> word_order;
+            deque<int> word_order;
             int index = (e_idx);
             while (index != (b_idx)) {
                 word_order.push_back(index);
@@ -498,27 +493,28 @@ public:
             word_order.push_back((b_idx));
             size_t morph_count = word_order.size();
             cout << "Words in morph: " << morph_count << "\n";
-
             if (output_W) {
-                for (size_t i = morph_count-1; i;i--) {
-                    cout << dict_entries[word_order[i]].getWord() << "\n";
+                while(!word_order.empty()) {
+                    cout << dict_entries[word_order.back()].getWord() << "\n";
+                    word_order.pop_back();
                 }
-                cout << end << endl;
+                // for (size_t i = morph_count-1; i;i--) {
+                //     cout << dict_entries[word_order[i]].getWord() << "\n";
+                // }
+                // cout << end << endl;
             }
             else {
                 //word_order end, ..., begin with size n
                 //run n times
                 //look at end word,
                 size_t shared_char_count;
-                size_t w_len;
-                size_t cw_len;
 
                 cout << begin << "\n";
                 for (size_t i = morph_count-1; i;i--) {
                     const string &word      = dict_entries[word_order[i-1]].getWord();
-                    const string &cw        = dict_entries[word_order[i]].getWord();
-                    w_len     = word.length();
-                    cw_len    = cw.length();
+                    const string &cw        = dict_entries[word_order.back()].getWord();
+                    const size_t &w_len     = word.length();
+                    const size_t &cw_len    = cw.length();
 
                     if (w_len == cw_len) {
                         for (size_t j = 0; j < w_len; j++) {
@@ -559,7 +555,7 @@ public:
                         }
                     }
 
-
+                word_order.pop_back();
                 }
             }
         }
