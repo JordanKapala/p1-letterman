@@ -57,9 +57,9 @@ private:
     };
     vector<dict_entry> dict_entries;
 
-    void readSimpleDict(const string &w)
+    void readSimpleDict(string &w)
     {
-        string current_word = w;
+        string &current_word = w;
 
         for (int i = 0; i < line_count; i++) {
             if (!length_mode && current_word.length() != b_len) {
@@ -67,14 +67,14 @@ private:
                 continue;
             }
             checkBeginEnd(current_word);
-            dict_entries.push_back(dict_entry(current_word));
+            dict_entries.emplace_back(dict_entry(current_word));
             cin >> current_word;
         }
     }
 
-    void readComplexDict(const string &w)
+    void readComplexDict(string &w)
     {
-        string current_word = w;
+        string &current_word = w;
         size_t special_char_id;
         
         for (int i = 0; i < line_count; i++) {
@@ -90,12 +90,12 @@ private:
                     }
                         current_word.pop_back();
                         checkBeginEnd(current_word);
-                        dict_entries.push_back(dict_entry(current_word));
+                        dict_entries.emplace_back(dict_entry(current_word));
                         for (size_t j = 0; j < current_word.length()/2; j++) {
                             swap(current_word[j], current_word[current_word.length()-j-1]);
                         }
                         checkBeginEnd(current_word);
-                        dict_entries.push_back(dict_entry(current_word));
+                        dict_entries.emplace_back(dict_entry(current_word));
                 }
                 else if (current_word[special_char_id] == '[') { //insert  []
                     size_t special_char_id2  = current_word.find("]");
@@ -109,7 +109,7 @@ private:
                         for (size_t j = 0; j < word_count; j++) {
                             current_word.insert(special_char_id, 1, chars[j]);
                             checkBeginEnd(current_word);
-                            dict_entries.push_back(dict_entry(current_word));
+                            dict_entries.emplace_back(dict_entry(current_word));
                             current_word.erase(special_char_id, 1);
                         }
                 }
@@ -120,21 +120,21 @@ private:
                     }
                         current_word.erase(special_char_id, 1);
                         checkBeginEnd(current_word);
-                        dict_entries.push_back(dict_entry(current_word));
+                        dict_entries.emplace_back(dict_entry(current_word));
                         swap(current_word[special_char_id-1], current_word[special_char_id-2]);
                         checkBeginEnd(current_word);
-                        dict_entries.push_back(dict_entry(current_word));
+                        dict_entries.emplace_back(dict_entry(current_word));
                 }
                 else if (current_word[special_char_id] == '?') { //double   ?
                     current_word.erase(special_char_id, 1);
                     if (length_mode || current_word.length() == b_len) {
                         checkBeginEnd(current_word);
-                        dict_entries.push_back(dict_entry(current_word));
+                        dict_entries.emplace_back(dict_entry(current_word));
                     }
                     if (length_mode || current_word.length()+1 == b_len) {
                         current_word.insert(special_char_id, 1, current_word[special_char_id-1]);
                         checkBeginEnd(current_word);
-                        dict_entries.push_back(dict_entry(current_word));
+                        dict_entries.emplace_back(dict_entry(current_word));
                     }
                 }
             }
@@ -144,7 +144,7 @@ private:
                     continue;
                 }
                     checkBeginEnd(current_word);
-                    dict_entries.push_back(dict_entry(current_word));
+                    dict_entries.emplace_back(dict_entry(current_word));
             }
             cin >> current_word;
         }
@@ -169,7 +169,8 @@ private:
     } 
 
 public:
-    // Letterman(const int &argc, char *argv[]) : {}
+
+    // Letterman() : {};
 
     void GetOptions(int argc, char *argv[])
     {
@@ -345,6 +346,7 @@ public:
         int shared_char_count;
         int diff_char_count;
 
+        // bool swappable;
         bool isSimilar;
         while(!solution) {
             if (stack_mode) {
@@ -363,14 +365,17 @@ public:
                     const int &w_len     = static_cast<int>(de.getWord().length());
                     isSimilar = false;
                     
-                    if (w_len == cw_len) {
+                    if (w_len == cw_len) { //add if change or swap
+
+
+
                         const string &word = de.getWord();
                         if (change_mode) {
                             diff_char_count   = 0;
                             isSimilar = true;
                             for (int j = 0; j < w_len; j++) {
                                 if (word[j] != cw[j]) {
-                                    diff_char_count++;
+                                    ++diff_char_count;
                                     if (diff_char_count == 2) {
                                         isSimilar = false;
                                         break;
@@ -379,40 +384,22 @@ public:
                             }
                         }
                         if (swap_mode && !isSimilar) {
-                            shared_char_count = 0;
+                            isSimilar = true;
                             diff_char_count = 0;
-                            // swapped = false;
-                            // isSimilar = true;
                             for (int j = 0; j < w_len; j++) {
-                                // if (cw[j] != word[j]) {
-                                //     if (swapped) {
-                                //         isSimilar = false;
-                                //         break;
-                                //     }
-                                //     if ((cw[j] == word[j+1]) && (cw[j+1] == word[j])) {
-                                //         swapped = true;
-                                //         j++;
-                                //     }
-                                //     else {
-                                //         isSimilar = false;
-                                //         break;
-                                //     }
-                                // }
-                                if (cw[j] == word[j]) {
-                                    shared_char_count++;
-                                }
-                                else {
+                                if (cw[j] != word[j]) {
                                     if ((cw[j] == word[j+1]) && (cw[j+1] == word[j])) {
-                                        diff_char_count++;
-                                        if (diff_char_count == 2) {
-                                            break;
-                                        }
-                                        j++;
+                                        ++j;
+                                        ++diff_char_count;
+                                    }
+                                    else {
+                                        isSimilar = false;
+                                        break;
                                     }
                                 }
                             }
-                            if (shared_char_count == (w_len-2) && diff_char_count == 1) {
-                                isSimilar = true;
+                            if (diff_char_count != 1) {
+                                isSimilar = false;
                             }
                         }
                     }
@@ -428,7 +415,7 @@ public:
                                         isSimilar = true;
                                         break;
                                     }
-                                    j++;
+                                    ++j;
                                 }
                                 else {
                                     diff_char_count++;
@@ -446,7 +433,7 @@ public:
                                         isSimilar = true;
                                         break;
                                     }
-                                    k++;
+                                    ++k;
                                 }
                                 else {
                                     diff_char_count++;
@@ -479,7 +466,7 @@ public:
             int words_discovered = 0;
             for (dict_entry &de : dict_entries) {
                 if (de.isDiscovered()) {
-                    words_discovered++;
+                    ++words_discovered;
                 }
             }
             cout << "No solution, " << words_discovered << " words discovered." << endl;
@@ -488,7 +475,7 @@ public:
         else {
             deque<int> word_order;
             int index = (e_idx);
-            while (index != (b_idx)) {
+            while (index != b_idx) {
                 word_order.push_back(index);
                 index = dict_entries[index].getPrev();
             }
@@ -505,18 +492,16 @@ public:
                 size_t shared_char_count;
 
                 cout << begin << "\n";
-                while (word_order.size()-1) {
-                //for (size_t i = morph_count-1; i;i--) {
-                    const string &cw        = dict_entries[word_order.back()].getWord();
-                    word_order.pop_back();
-                    const string &word      = dict_entries[word_order.back()].getWord();
-                    const size_t w_len     = word.length();
-                    const size_t cw_len    = cw.length();
+                for (size_t i = morph_count-1; i;i--) {
+                    const string &cw        = dict_entries[word_order[i]].getWord();
+                    const string &word      = dict_entries[word_order[i-1]].getWord();
+                    const size_t &w_len     = word.length();
+                    const size_t &cw_len    = cw.length();
 
                     if (w_len == cw_len) {
                         int j = 0;
                         while (word[j] == cw[j]) {
-                            j++;
+                            ++j;
                         }
                         if ((cw[j+1] != word[j+1])) {
                             cout << "s," << j << "\n";
