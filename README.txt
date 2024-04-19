@@ -1,15 +1,19 @@
-Make sure to copy this project identifier into all of your source code files
-(.cpp, .h, .hpp):
-// Project Identifier: 50EB44D3F029ED934858FFFCEAC3547C68768FC9
+These are the skills and concepts encountered in this project:
+
+Text Dictionary: read, store, access, and write
+Breadth-first search (BFS w/ queue)
+Depth-first search (DFS w/ stack)
+Word and modification mode output
+Create custom data structures for efficient storage and access
+Use getopt_long() to handle command line inputs
+Use std::cin and std::cout to handle input and output
+Use std::cerr to handle error messages
+Use std::vector<> to store and access data
+Use std::deque<> to store and access data
+
+https://eecs281staff.github.io/p1-letterman/
 
 
-The file Error_messages.txt contains standardized error messages, to help
-the autograder help you.  Please read it and use those error messages,
-and never ever exit(1) without an explanation as to why the program is
-exiting.
-
-
-This set of sample files includes the following:
 
 spec-simple.txt                - From the project specification, page 2
 spec-complex.txt               - From the project specification, page 3
